@@ -1,0 +1,71 @@
+- name: Switch to correct project & others common prerequisites
+  hosts: common
+  connection: local
+  gather_facts: no
+  serial: 1
+  roles:
+    - role: common/init
+      tags: ["init"]
+    - name: k8s/namespaces
+      tags: ['ns']
+
+- name: Deploy Bitcoind
+  hosts: bitcoind
+  connection: local
+  gather_facts: no
+  serial: 1
+  pre_tasks:
+    - name: Deploy LND service
+      include_role:
+        name: k8s/simsvc
+      vars:
+        simsvc_name: "{{app_name}}-lnd"
+        simsvc_selector_app: "{{app_name}}-lnd"
+        simsvc_ports:
+          - protocol: TCP
+            port: 9735
+            name: lnd-p2p
+            targetPort: lnd-p2p
+          - protocol: TCP
+            port: 10009
+            name: lnd-rpc
+            targetPort: lnd-rpc
+      tags: ['svc']
+    - name: Deploy Bitcoind service
+      include_role:
+        name: k8s/simsvc
+      vars:
+        simsvc_name: "{{app_name}}-bitcoind"
+        simsvc_selector_app: "{{app_name}}-bitcoind"
+        simsvc_ports:
+          - protocol: TCP
+            port: 28332
+            name: btcd-zmqblock
+            targetPort: btcd-zmqblock
+          - protocol: TCP
+            port: 28333
+            name: btcd-zmqtx
+            targetPort: btcd-zmqtx
+          - protocol: TCP
+            port: 8332
+            targetPort: btcd-rpc
+            name: btcd-rpc
+          - protocol: TCP
+            port: 8333
+            targetPort: btcd-p2p
+            name: btcd-p2p
+      tags: ['svc']
+  roles:
+    - name: bitcoin/bitcoind
+      bitcoin_bitcoind_app_name: "{{app_name}}-bitcoind"
+      bitcoin_bitcoind_app_role: "{{app_name}}-bitcoind"
+      bitcoin_bitcoind_cfg_version: "{{lightning_cfg_version}}"
+    - role: bitcoin/lnd
+      bitcoin_lnd_cfg_version: "{{lightning_cfg_version}}"
+      bitcoin_lnd_app_name: "{{app_name}}-lnd"
+      bitcoin_lnd_app_role: "{{app_name}}-lnd"
+      bitcoin_lnd_bitcoind_host: "{{app_name}}-bitcoind"
+      #bitcoin_lnd_disk: "{{bitcoin_lnd_disk}}"
+      bitcoin_lnd_bitcoind_cfg_secret: "{{bitcoin_bitcoind_cfg_secret}}"
+      bitcoin_lnd_bitcoind_zmqpubrawblock: "tcp://{{app_name}}-bitcoind:28332"
+      bitcoin_lnd_bitcoind_zmqpubrawtx: "tcp://{{app_name}}-bitcoind:28333"

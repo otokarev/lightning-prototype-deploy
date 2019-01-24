@@ -1,0 +1,9 @@
+- src: https://github.com/otokarev/ansible-role-apay-common
+  version: master
+  name: common
+- src: https://github.com/otokarev/ansible-role-apay-k8s
+  version: master
+  name: k8s
+- src: https://github.com/otokarev/ansible-role-apay-bitcoin
+  version: master
+  name: bitcoin

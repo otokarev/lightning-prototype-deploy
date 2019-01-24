@@ -1,0 +1,23 @@
+all:
+  vars:
+    project: apay-io
+    cluster_name: apay-02
+    cluster_zone: europe-west1-b
+    zone: europe-west1-d
+    namespace: dev-bitcoin
+    namespaces: [dev-bitcoin]
+  children:
+    common:
+      hosts:
+        common:
+          app_name: common
+    lightning-nodes:
+      vars:
+        app_name: "lightning"
+      hosts:
+        bitcoind:
+          lightning_cfg_version: "v1"
+          bitcoin_bitcoind_cfg_secret: cfg-bitcoind-1
+          bitcoin_bitcoind_disk: testnet-bitcoin-europe-west1-d
+          bitcoin_lnd_disk: testnet-lnd-europe-west1-d
+          bitcoin_bitcoind_testnet: true
